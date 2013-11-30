@@ -1,11 +1,16 @@
 
 express = require('express')
+routes = require('./routes')
 
 app = express()
 
-app.get('/', function(req, res) {
-    res.send("hello world");
-});
+// Middleware
+
+// User facing routes
+app.get('/', routes.index);
+app.get('/login', routes.login);
+
+// REST API routes
 
 var port = 8000;
 app.listen(port);
