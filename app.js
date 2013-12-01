@@ -1,16 +1,64 @@
-
 var express = require('express')
 var mongoose = require('mongoose')
+var path = require('path')
+var stylus = require('stylus')
+
 var routes = require('./routes')
-var user = require('./models/user')
+var User = require('./models/user')
 
 var app = express()
 
 // Middleware
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'jade');
+app.use(express.bodyParser());
+app.use(express.cookieParser());
+app.use(express.session({secret: 'Get a better secret'}));
 
-// User facing routes
-app.get('/', routes.index);
+/**
+  * Middleware for requiring authentication.
+  */
+function requiresAuthentication(req, res, next) {
+  var user = req.session.user;
+  if (!user) {
+    res.redirect('/login');
+  } else {
+    next();
+  }
+}
+
+// Routes
+app.get('/', requiresAuthentication, routes.index);
+
+// Login
 app.get('/login', routes.login);
+app.post('/login', function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+  var user = User.findOne({username: username}, function(err, user) {
+    if (err) {
+      req.send('Error logging in ' + err);
+    }
+
+    if (user) {
+      user.validatePassword(password, function(err, isValid) {
+        if (err) {
+          console.error('Error logging in ' + err);
+        }
+
+        if (isValid) {
+          console.log('logged in user ' + user);
+          req.session.user = user;
+          res.redirect('/');
+        } else {
+          console.log('failed login attempt for user ' + user);
+          res.redirect('/login');
+        }
+      
+      });
+    }
+  });
+});
 
 // REST API routes
 
@@ -27,18 +75,17 @@ mongoose.connect('mongodb://localhost/test')
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'database connection error:'))
 db.once('open', function(){
-  var User = user.User;
-  User.find({username: 'admin'}, function(err, admins){
+  User.findOne({username: 'admin'}, function(err, user){
     if (err) {
       console.error("Failed to query for administrator");
     } else {
-      if (admins.length == 0) {
+      if (!user) {
         console.log("No admin user detected, creating default");
-        admin = new User({username: 'admin', password: 'admin'});
+        admin = new User({username: 'admin', password: 'admin123'});
         admin.save();
       } else {
-        admin = admins[0];
-        console.log('Found administrative user');
+        admin = user;
+        console.log("Found administrative user");
       }
     }
   });
