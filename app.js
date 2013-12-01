@@ -17,6 +17,8 @@ app.use(express.session({secret: 'Get a better secret'}));
 
 /**
   * Middleware for requiring authentication.
+  * If there is no user associated with the current session,
+  * we redirect to the login page.
   */
 function requiresAuthentication(req, res, next) {
   var user = req.session.user;
