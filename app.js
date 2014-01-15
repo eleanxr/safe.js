@@ -4,6 +4,10 @@ var path = require('path')
 var stylus = require('stylus')
 
 var routes = require('./routes')
+var rest = require('./routes/rest');
+var auth = require('./util/auth');
+
+// Data Model
 var User = require('./models/user')
 
 var app = express()
@@ -19,6 +23,8 @@ app.use(express.session({secret: 'Get a better secret'}));
   * Middleware for requiring authentication.
   * If there is no user associated with the current session,
   * we redirect to the login page.
+  *
+  * Basic HTTP authentication is also allowed.
   */
 function requiresAuthentication(req, res, next) {
   var user = req.session.user;
@@ -62,7 +68,11 @@ app.post('/login', function(req, res) {
   });
 });
 
+app.get('/upload', routes.upload);
+
 // REST API routes
+app.get('/api/v1/list', auth.requiresBasicHttp, rest.list);
+app.post('/api/v1/save', auth.requiresBasicHttp, rest.save);
 
 function start_server() {
   var port = 8000;

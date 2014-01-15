@@ -1,0 +1,14 @@
+h1 Upload File
+
+form(action='/api/v1/save', method='post')
+  p
+    label Digest
+    input(type='text', name='digest')
+  p
+    label Digest Algorithm
+    input(type='text', name='digest_algorithm')
+  p
+    label Encrypted File
+    input(type='file', name='encrypted_file')
+  p 
+    input(type='submit', value='Save File')
